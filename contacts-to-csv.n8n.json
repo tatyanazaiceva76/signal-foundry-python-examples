@@ -1,0 +1,123 @@
+{
+  "name": "Website contacts to CSV — manual capped export",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "da42a566-f557-513d-a30d-63e79c92444f",
+      "name": "Manual start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "Importing does not run the Actor. Each manual execution starts a new paid snapshot."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/signalfoundryhq~website-contact-extractor/run-sync-get-dataset-items?maxTotalChargeUsd=0.03&memory=256&timeout=120",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"websiteUrls\": [\n    \"www.python.org/about/help/\",\n    \"https://www.djangoproject.com/contact/foundation/\"\n  ],\n  \"maxPagesPerSite\": 1,\n  \"maxItems\": 10,\n  \"includeEmptyPages\": false,\n  \"requireEmail\": true,\n  \"onlyNew\": false,\n  \"stateKey\": \"n8n-csv-export\"\n}",
+        "options": {
+          "timeout": 150000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": false,
+              "neverError": false
+            }
+          }
+        }
+      },
+      "id": "ea61d98b-743a-5c44-aad2-b13dbe26a6bd",
+      "name": "Extract contacts — max $0.03",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "retryOnFail": false,
+      "notesInFlow": true,
+      "notes": "Required: select a private Header Auth credential: Authorization = Bearer YOUR_APIFY_TOKEN. No token is included in this template. Edit websiteUrls in the JSON body. A failed response may still have started a run: check Apify Console before retrying."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// n8n Code node: JavaScript, Run Once for All Items.\nconst fields = ['websiteUrl', 'pageUrl', 'pageTitle', 'emails', 'phones', 'socialLinks'];\n\nfunction spreadsheetCell(value) {\n  const text = Array.isArray(value)\n    ? value.map(String).join('; ')\n    : value == null ? '' : String(value);\n  const visible = text.replace(/^[\\s\\uFEFF]+/, '');\n  return /^[=+\\-@＝＋－＠]/.test(visible) || /^[\\t\\r\\n]/.test(text)\n    ? \"'\" + text\n    : text;\n}\n\nreturn $input.all().map((item, index) => {\n  const row = item.json;\n  if (!row || typeof row.pageUrl !== 'string' || !Array.isArray(row.emails)) {\n    throw new Error('Expected a contact dataset row. Check the HTTP response and keep full-response mode off.');\n  }\n  return {\n    json: Object.fromEntries(fields.map(field => [field, spreadsheetCell(row[field])])),\n    pairedItem: { item: index },\n  };\n});\n"
+      },
+      "id": "b535b303-3504-5b43-ba20-b13f5a7de5fa",
+      "name": "Flatten contact arrays",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "contacts.csv",
+          "headerRow": true
+        }
+      },
+      "id": "b31d213f-868a-5d47-b98e-fae958890205",
+      "name": "Create contacts.csv",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        0
+      ],
+      "notes": "Download binary field data after execution. Empty datasets may produce no file. Formula-like cells receive an apostrophe prefix; retain the JSON if exact original strings are needed."
+    }
+  ],
+  "connections": {
+    "Manual start": {
+      "main": [
+        [
+          {
+            "node": "Extract contacts — max $0.03",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract contacts — max $0.03": {
+      "main": [
+        [
+          {
+            "node": "Flatten contact arrays",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten contact arrays": {
+      "main": [
+        [
+          {
+            "node": "Create contacts.csv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

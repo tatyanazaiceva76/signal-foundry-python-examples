@@ -14,6 +14,25 @@ The demo accepts up to 2 MiB and 10,000 rows, keeps the same contact/job columns
 
 [Source-linked website contacts to CSV](skills/apify-source-linked-contacts-csv/SKILL.md) packages the contact workflow for compatible AI coding assistants. It includes its own Python helper and synthetic offline sample. Hosted requests require the user's authorized spending cap; installing or reading the skill does not start an Actor. The skill is self-contained under `skills/apify-source-linked-contacts-csv/`.
 
+## n8n: website contacts to CSV
+
+The [importable n8n workflow](contacts-to-csv.n8n.json) connects **Manual Trigger → HTTP Request → Code → Convert to File**. Download the JSON using GitHub's **Raw → Download raw file**, then choose **Import from File** in n8n. Alternatively, use **Import from URL** with:
+
+```text
+https://raw.githubusercontent.com/tatyanazaiceva76/signal-foundry-python-examples/main/contacts-to-csv.n8n.json
+```
+
+The workflow is inactive and contains no token, credential ID or captured contact data. Importing it does not start a run. To configure it:
+
+1. On **Extract contacts — max $0.03**, select a private **Header Auth** credential: header name `Authorization`, value `Bearer YOUR_APIFY_TOKEN`, using your own Apify token. Keep it out of the shared workflow JSON and URL.
+2. Edit `websiteUrls` in that node's **JSON body**. The example uses two public project contact pages; replace them with the pages you intend to process. Keep numbers and booleans typed as JSON values.
+3. Review the input and the Actor's current price, then execute manually. One execution starts one paid snapshot, with a **$0.03 server-side cap**, at most ten delivered rows and one starting page per site. `requireEmail: true` filters no-email pages before delivery and result charging. It does not verify a mailbox or grant permission to contact anyone.
+4. Download binary field `data` from **Create contacts.csv**. Output preserves website and page sources and joins contact arrays into cells. Formula-like strings receive an apostrophe prefix; retain the JSON for unmodified data.
+
+Automatic retries are disabled. A timeout can hide a run that already started: inspect the Actor's recent runs in Apify Console and retrieve that existing dataset before repeating the POST. Empty results may produce no CSV file. This manual workflow creates no schedule, mail campaign or Google Sheets connection.
+
+The unchanged template was checked locally against the HTTP Request 4.2, Code 2 and Convert to File 1.1 node definitions, including normal, empty, malformed and formula-like rows. **Import and execution in a live n8n instance have not been verified.** The [Actor guide](https://apify.com/signalfoundryhq/website-contact-extractor) includes a manual node-by-node recipe. Publisher ownership and AI assistance are disclosed above; this is an independent integration, not an n8n endorsement.
+
 ## Start offline
 
 Download this repository with GitHub's **Code → Download ZIP**, or clone it:
