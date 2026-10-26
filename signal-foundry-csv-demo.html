@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Signal Foundry · Offline CSV demo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#192433;font:16px/1.55 system-ui,sans-serif}main{max-width:1080px;margin:40px auto;padding:0 22px}header{margin-bottom:26px}.eyebrow{color:#42635c;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:12px 0}h2{font-size:19px;margin:0 0 12px}p{margin:10px 0}.lede{max-width:760px;color:#4c596b}.card{padding:24px;border:1px solid #dce2ea;border-radius:16px;background:white;margin:18px 0;box-shadow:0 4px 14px #10213005}.row{display:flex;flex-wrap:wrap;gap:14px;align-items:end}.field{display:grid;gap:7px;flex:1;min-width:230px}label{font-weight:600;font-size:14px}select,input[type=file]{font:inherit;border:1px solid #c5cfdb;border-radius:8px;padding:10px;background:white;width:100%;min-height:46px}button{font:inherit;cursor:pointer;border:1px solid #bfcbd8;background:#fff;color:#192433;padding:10px 16px;border-radius:8px;min-height:44px}button:hover{background:#f0f4f8}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #7a8dff;outline-offset:3px}.primary{background:#245b4e;color:white;border-color:#245b4e}.primary:hover{background:#194b40}.primary:disabled{opacity:.45;cursor:default}.samples{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.hint,small,footer{font-size:13px;color:#566273}.check{display:flex;align-items:center;gap:8px;margin:16px 0}.check input{width:18px;height:18px}.check label{font-weight:400}#status{padding:12px 14px;border-radius:8px;background:#eef3f7;margin:18px 0;color:#3c4d62}#status[data-error=true]{background:#fff0ee;color:#9b2525}.output-head{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}.table-wrap{overflow:auto;max-height:350px;margin-top:20px;border:1px solid #e1e6ed;border-radius:8px}table{border-collapse:collapse;min-width:100%;font-size:13px}th,td{padding:10px 12px;border-bottom:1px solid #e1e6ed;vertical-align:top;text-align:left;min-width:140px;max-width:300px;overflow-wrap:anywhere}th{background:#eef3f7;position:sticky;top:0;color:#33435a}caption{text-align:left;padding:10px;color:#566273}a{color:#245b4e}code{font:13px ui-monospace,monospace;background:#eff3f6;padding:2px 4px;border-radius:4px}footer{margin:26px 0 40px}footer p{max-width:900px}.badge{display:inline-block;border:1px solid #bcd4ca;background:#ecf5ef;color:#235345;padding:4px 9px;border-radius:20px;font-size:12px;margin-top:8px}@media(max-width:600px){main{margin:20px auto;padding:0 14px}.card{padding:18px}.field{min-width:100%}.samples button{width:100%}.primary{width:100%}}
+</style>
+<main>
+<header><div class="eyebrow">Signal Foundry / downloadable example</div><h1>Your exported JSON, ready for a spreadsheet.</h1><p class="lede">Convert a Website Contact Scraper or Greenhouse Jobs Scraper dataset to CSV in your browser. Save this HTML file and open it locally; Python and an Apify account are unnecessary for conversion.</p><span class="badge">Local processing · no API calls · no uploads</span></header>
+<section class="card" aria-labelledby="input-heading"><h2 id="input-heading">1. Choose your dataset</h2><div class="row"><div class="field"><label for="mode">Dataset type</label><select id="mode"><option value="contacts">Website contacts</option><option value="jobs">Greenhouse jobs</option></select></div><div class="field"><label for="file">Open a JSON export</label><input id="file" type="file" accept=".json,application/json"></div></div><p class="hint">A JSON array of records, up to 2 MiB and 10,000 rows. Files are read in this page; their contents are not sent to a server.</p><div class="samples"><button id="sample-contacts">Try synthetic contacts</button><button id="sample-jobs">Try synthetic jobs</button></div><div class="check"><input type="checkbox" id="email-only"><label for="email-only">Contacts: keep only rows with extracted email</label></div><p class="hint">This filter only changes this CSV. It cannot change charges from the original Actor run, verify mailboxes or grant permission to send messages.</p></section>
+<section class="card" aria-labelledby="output-heading"><div class="output-head"><h2 id="output-heading">2. Review and download</h2><button id="download" class="primary" disabled>Download CSV</button></div><div id="status" role="status" aria-live="polite">Choose your JSON file or try a synthetic sample.</div><div class="table-wrap" id="preview" hidden><table><caption id="caption"></caption><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div><p class="hint">CSV is UTF-8 with a BOM, quoted cells and Windows line endings. Arrays become semicolon-separated cells. Formula-like values receive a leading apostrophe, including phone numbers beginning with <code>+</code>. Keep the original JSON for unmodified values.</p></section>
+<footer><p><strong>About this example.</strong> The bundled samples use <code>example.com</code> and are synthetic, not collected leads or current vacancies. The preview shows at most six rows and shortens long cells; the downloaded CSV contains the full selected records.</p><p>Signal Foundry publishes the optional paid Apify Actors referenced by the <a href="https://github.com/tatyanazaiceva76/signal-foundry-python-examples" rel="noopener noreferrer">source and setup guide</a>. This demo and the clients were created with AI assistance. Reading or using this file starts no paid run.</p><p>The page stores nothing in cookies or local storage. Its content policy blocks network connections. External guide links open only when you choose them. When downloading this file from GitHub, GitHub receives the normal download request.</p></footer>
+</main>
+<script id="csv-core">
+'use strict';
+var CsvDemo = (() => {
+  const fields = {
+    contacts: ['websiteUrl','pageUrl','pageTitle','emails','phones','socialLinks'],
+    jobs: ['boardToken','jobId','companyName','title','location','departments','firstPublished','updatedAt','jobUrl','descriptionText','signalId']
+  };
+  function scalar(value) {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+    if (typeof value === 'boolean') return value ? 'True' : 'False';
+    throw new Error('A CSV field contains an unsupported object or nested array. Keep the JSON and check the selected dataset type.');
+  }
+  function cell(value) {
+    let text = Array.isArray(value) ? value.map(scalar).join('; ') : scalar(value);
+    if (/^[\s\uFEFF]*[=+@\-＝＋－＠]/u.test(text) || /^[\t\r\n]/u.test(text)) text = "'" + text;
+    return '"' + text.replaceAll('"','""') + '"';
+  }
+  function validate(rows, mode) {
+    if (!fields[mode]) throw new Error('Choose a supported dataset type.');
+    if (!Array.isArray(rows) || rows.some(r => r === null || typeof r !== 'object' || Array.isArray(r))) throw new Error('Expected a JSON array of record objects.');
+    if (rows.length > 10000) throw new Error('This demo accepts at most 10,000 rows. Use the Python client for larger exports.');
+    for (const [i, row] of rows.entries()) {
+      if (mode === 'contacts' && (typeof row.websiteUrl !== 'string' || typeof row.pageUrl !== 'string')) throw new Error('Row ' + (i+1) + ' is missing websiteUrl or pageUrl. Choose a Website Contact Scraper export.');
+      if (mode === 'jobs' && (typeof row.title !== 'string' || typeof row.jobUrl !== 'string' || !(typeof row.jobId === 'string' || Number.isSafeInteger(row.jobId)))) throw new Error('Row ' + (i+1) + ' is missing a valid jobId, title or jobUrl. Choose a Greenhouse Jobs Scraper export.');
+      for (const key of (mode === 'contacts' ? ['emails','phones','socialLinks'] : ['departments'])) {
+        if (row[key] != null && !Array.isArray(row[key])) throw new Error('Row ' + (i+1) + ': ' + key + ' must be an array.');
+      }
+      fields[mode].forEach(key => cell(row[key]));
+    }
+    return rows;
+  }
+  function parse(text, mode) {
+    if (new TextEncoder().encode(text).length > 2 * 1024 * 1024) throw new Error('The file is larger than 2 MiB. Use the Python client for larger exports.');
+    let rows;
+    try { rows = JSON.parse(text.replace(/^\uFEFF/,'')); } catch { throw new Error('The file is not valid JSON. Export the dataset as a JSON array.'); }
+    return validate(rows, mode);
+  }
+  function select(rows, mode, emailOnly) {
+    validate(rows, mode);
+    return mode === 'contacts' && emailOnly ? rows.filter(r => Array.isArray(r.emails) && r.emails.length > 0) : rows;
+  }
+  function csv(rows, mode, emailOnly = false) {
+    rows = select(rows, mode, emailOnly);
+    return '\uFEFF' + [fields[mode], ...rows.map(row => fields[mode].map(k => row[k]))].map(row => row.map(cell).join(',')).join('\r\n') + '\r\n';
+  }
+  return Object.freeze({fields, parse, select, csv});
+})();
+</script>
+<script id="csv-ui">
+'use strict';
+(() => {
+  const byId = id => document.getElementById(id);
+  const mode = byId('mode'), input = byId('file'), emailOnly = byId('email-only'), download = byId('download');
+  const status = byId('status'), preview = byId('preview');
+  let rows = null, source = '', csv = '', objectUrl = null, generation = 0;
+  const samples = {"contacts": [{"websiteUrl": "https://example.com/", "pageUrl": "https://example.com/", "pageTitle": "Synthetic social-only page", "emails": [], "phones": [], "socialLinks": ["https://github.com/example"]}, {"websiteUrl": "https://example.com/", "pageUrl": "https://example.com/contact", "pageTitle": "Synthetic contact page — München 東京", "emails": ["info@example.com", "support@example.com"], "phones": ["+12025550123"], "socialLinks": []}], "jobs": [{"boardToken": "example-company", "jobId": "demo-001", "companyName": "Example Company (synthetic)", "title": "Backend Engineer, Data Platform", "location": "Example City", "departments": ["Engineering", "Data"], "firstPublished": "2026-10-01T09:00:00Z", "updatedAt": "2026-10-02T09:00:00Z", "jobUrl": "https://example.com/jobs/demo-001", "descriptionText": "Synthetic demonstration only.\nBuild Python services and work with SQL datasets.", "signalId": "example-company:demo-001:synthetic-version-a"}, {"boardToken": "example-company", "jobId": "demo-002", "companyName": "Example Company (synthetic)", "title": "=Synthetic formula-like title", "location": "Example Remote", "departments": ["Engineering"], "firstPublished": "2026-10-01T10:00:00Z", "updatedAt": "2026-10-02T10:00:00Z", "jobUrl": "https://example.com/jobs/demo-002", "descriptionText": "Synthetic demonstration only. A second record with commas, quotes (\"sample\") and Python.", "signalId": "example-company:demo-002:synthetic-version-a"}]};
+  function message(text, error = false) { status.textContent = text; status.dataset.error = String(error); }
+  function render() {
+    emailOnly.disabled = mode.value !== 'contacts';
+    download.disabled = true; preview.hidden = true; csv = '';
+    if (rows === null) return;
+    try {
+      const selected = CsvDemo.select(rows, mode.value, emailOnly.checked);
+      csv = CsvDemo.csv(rows, mode.value, emailOnly.checked);
+      const head = document.createElement('tr');
+      for (const key of CsvDemo.fields[mode.value]) { const th = document.createElement('th'); th.scope = 'col'; th.textContent = key; head.append(th); }
+      byId('table-head').replaceChildren(head); byId('table-body').replaceChildren();
+      for (const record of selected.slice(0,6)) {
+        const tr = document.createElement('tr');
+        for (const key of CsvDemo.fields[mode.value]) {
+          const td = document.createElement('td'), value = record[key];
+          const text = value == null ? '' : Array.isArray(value) ? value.join('; ') : String(value);
+          td.textContent = text.length > 250 ? text.slice(0,250) + '…' : text; tr.append(td);
+        }
+        byId('table-body').append(tr);
+      }
+      byId('caption').textContent = 'Preview: ' + Math.min(6, selected.length) + ' of ' + selected.length + ' exported rows. Long cells are shortened here.';
+      preview.hidden = false; download.disabled = false;
+      message(source + ': ' + selected.length + ' of ' + rows.length + ' rows ready. No network request or Actor run.');
+    } catch (error) { message(error.message, true); }
+  }
+  async function openFile() {
+    const current = ++generation, file = input.files[0];
+    rows = null; csv = ''; preview.hidden = true; download.disabled = true;
+    if (!file) { message('Choose your JSON file or try a synthetic sample.'); return; }
+    if (file.size > 2*1024*1024) { message('The file is larger than 2 MiB. Use the Python client for larger exports.', true); return; }
+    try {
+      const text = await file.text();
+      if (current !== generation) return;
+      rows = CsvDemo.parse(text, mode.value); source = file.name; render();
+    } catch (error) { if (current === generation) message(error.message, true); }
+  }
+  function sample(which) {
+    ++generation; mode.value = which; input.value = ''; emailOnly.checked = false;
+    rows = samples[which]; source = 'Synthetic ' + which + ' sample'; render();
+  }
+  input.addEventListener('change', openFile);
+  mode.addEventListener('change', () => { ++generation; render(); });
+  emailOnly.addEventListener('change', render);
+  byId('sample-contacts').addEventListener('click', () => sample('contacts'));
+  byId('sample-jobs').addEventListener('click', () => sample('jobs'));
+  download.addEventListener('click', () => {
+    if (download.disabled || !csv) return;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+    const a = document.createElement('a'); a.href = objectUrl; a.download = mode.value === 'contacts' ? 'contacts.csv' : 'jobs.csv';
+    document.body.append(a); a.click(); a.remove();
+  });
+})();
+</script>
+</html>
