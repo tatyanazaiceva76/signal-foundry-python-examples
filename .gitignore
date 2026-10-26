@@ -9,3 +9,6 @@ jobs.csv
 contacts-with-email.csv
 python-jobs.csv
 changed-jobs.csv
+*.lock
+.contacts-*
+.checkpoint-*

@@ -1,8 +1,10 @@
 # Python CSV clients: website contacts and Greenhouse jobs
 
-Two standalone Python 3.9+ examples for exporting source-linked company contacts or an employer hiring watchlist to a spreadsheet. Try both with the included synthetic JSON files before connecting an API. No package installation is needed.
+Python 3.9+ clients for exporting source-linked company contacts or an employer hiring watchlist to a spreadsheet. A CSV batch driver handles website lists larger than one Actor input. Try both with the included synthetic JSON files before connecting an API. No package installation is needed.
 
 **Publisher disclosure:** Signal Foundry publishes the paid Apify Actors used by the optional hosted modes below. These examples, tests and documentation were created with AI assistance. Downloading the code and running the offline samples does not start an Actor or require an Apify account.
+
+Have more than 25 website URLs? Start with the [offline CSV batch plan](#bulk-website-lists-from-csv), then authorize one aggregate Actor-run cap before hosted execution.
 
 ## Offline browser demo
 
@@ -97,6 +99,38 @@ The CSV columns are `websiteUrl`, `pageUrl`, `pageTitle`, `emails`, `phones` and
 
 [Complete contact-client guide and standalone files](https://gist.github.com/tatyanazaiceva76/b5aafad7a3b5dd35f7d32c001e195a22).
 
+## Bulk website lists from CSV
+
+Use [batch_contacts.py](batch_contacts.py) with `export_contacts.py` in the same folder. It reads one selected website column from a UTF-8 CSV, removes identical normalized starting URLs, splits the list into batches of at most 25 and combines the returned page records into one CSV. Other input columns are not submitted to Apify or carried into the output; keep the original file for joins by website. Different paths on one domain remain separate starting URLs.
+
+Start with the included **synthetic** file. Its `.example` hosts are placeholders, not businesses or an extraction target:
+
+```bash
+python3 batch_contacts.py --input-csv sample_websites.csv
+```
+
+This performs **no network request**, needs no token, starts no run and creates no checkpoint or output. The sample has 61 input rows, 60 unique URLs and 3 batches. With the default **$0.08 cap per batch**, the sum of run caps is **$0.24**. That is a ceiling, not a price quote or an invoice.
+
+For your own data, put a `website` header in `my-websites.csv`, or select another exact header with `--column Website`. Review the current [Actor price and limits](https://apify.com/signalfoundryhq/website-contact-extractor), set your own `APIFY_TOKEN`, and opt in explicitly:
+
+```bash
+python3 batch_contacts.py --input-csv my-websites.csv --require-email --batch-cap 0.08 --max-total-charge 0.24 --execute --output contacts.csv
+```
+
+That example authorizes at most three $0.08 runs; if the CSV needs more batches, it stops **before any API call**. Set the total only after reviewing the offline plan. The program requires the sum of every planned batch cap to fit inside the authorized total, and does not recycle unused or provisional charges. The bound applies to new Actor runs in this one unchanged checkpoint, not to unrelated account activity or separately billed storage/API usage. Larger `--max-pages` values can require a higher per-run cap; a cap may truncate results and never guarantees a match or complete site coverage.
+
+The default scans one starting page per website. `--require-email` filters no-email page records before delivery and result charging; it does not verify mailboxes. The base Actor price remains **$0.003 per delivered page version**, including its platform usage, with no start fee and plan discounts where listed. One page row can include several contacts. This helper does not scrape Google Maps, find private employee emails, send messages or create a schedule.
+
+A private checkpoint at `.private/contact-batch-state.json` stores the plan, original run IDs and completed results, **never the API token**. Keep it private: run and dataset IDs can provide data access. A lock prevents simultaneous processes using the same checkpoint. Completed batches are reused, and a saved live run is inspected rather than recreated. Resume with the same input and settings:
+
+```bash
+python3 batch_contacts.py --input-csv my-websites.csv --require-email --batch-cap 0.08 --max-total-charge 0.24 --execute --resume --output contacts.csv
+```
+
+If a start response was lost before its run ID was saved, this command stops. Find that exact run in Apify Console, then add `--recover-run RUN_ID` to the resume command. Recovery checks the Actor, server charge cap and saved run input before adopting the ID. If you cannot establish the outcome, do not start a replacement. Do not edit or delete a checkpoint to retry the same job. A hard process kill can leave a `.lock` file; remove that file only after confirming the original process has exited. A failed batch stops further starts; any completed CSV and checkpoint data remain available.
+
+**Validation on 26 October 2026:** nine focused offline tests cover batch merging, aggregate caps, durable run IDs, ambiguous starts, input-checked recovery and concurrent-use rejection. A separate owner check completed two one-website batches on the Python help and Django foundation contact pages, with a combined configured run cap of **$0.006** and email-only output. It returned one combined page record; a subsequent recovery check read the existing run and input without a new POST. These are owner tests, not customer work or proof of sales. The sixty-URL test uses synthetic responses; it is not a live sixty-site benchmark.
+
 ## Greenhouse jobs to CSV
 
 Put one Greenhouse board token per line in `boards.txt`, for example:
@@ -134,7 +168,7 @@ Do not put tokens in command URLs, shared JSON or issue reports. The clients sen
 ## Run the local tests
 
 ```bash
-python3 -m unittest discover -p 'test_export_*.py' -v
+python3 -m unittest discover -p 'test_*.py' -v
 ```
 
 The tests cover offline conversion, CSV output, charge-cap and authentication placement, no automatic paid-POST retries, and jobs feed history keys. Network calls in the tests are mocked. The published client versions were also checked against their original files; a separate capped owner run validated the jobs integration. Owner tests are not customer usage or sales evidence.
