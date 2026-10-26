@@ -1,0 +1,11 @@
+.private/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+contacts.csv
+jobs.csv
+contacts-with-email.csv
+python-jobs.csv
+changed-jobs.csv

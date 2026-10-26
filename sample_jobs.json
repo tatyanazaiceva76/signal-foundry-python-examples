@@ -1,0 +1,28 @@
+[
+  {
+    "boardToken": "example-company",
+    "jobId": "demo-001",
+    "companyName": "Example Company (synthetic)",
+    "title": "Backend Engineer, Data Platform",
+    "location": "Example City",
+    "departments": ["Engineering", "Data"],
+    "firstPublished": "2026-10-01T09:00:00Z",
+    "updatedAt": "2026-10-02T09:00:00Z",
+    "jobUrl": "https://example.com/jobs/demo-001",
+    "descriptionText": "Synthetic demonstration only.\nBuild Python services and work with SQL datasets.",
+    "signalId": "example-company:demo-001:synthetic-version-a"
+  },
+  {
+    "boardToken": "example-company",
+    "jobId": "demo-002",
+    "companyName": "Example Company (synthetic)",
+    "title": "=Synthetic formula-like title",
+    "location": "Example Remote",
+    "departments": ["Engineering"],
+    "firstPublished": "2026-10-01T10:00:00Z",
+    "updatedAt": "2026-10-02T10:00:00Z",
+    "jobUrl": "https://example.com/jobs/demo-002",
+    "descriptionText": "Synthetic demonstration only. A second record with commas, quotes (\"sample\") and Python.",
+    "signalId": "example-company:demo-002:synthetic-version-a"
+  }
+]
