@@ -4,6 +4,8 @@ Python 3.9+ clients for exporting source-linked company contacts or an employer 
 
 **Publisher disclosure:** Signal Foundry publishes the paid Apify Actors used by the optional hosted modes below. These examples, tests and documentation were created with AI assistance. Downloading the code and running the offline samples does not start an Actor or require an Apify account.
 
+Use the [website list to contact CSV guide](website-list-to-contact-csv.md) to start in the Apify web interface. It covers a capped trial on two pages, output with source links, offline conversion and larger website spreadsheets.
+
 Have more than 25 website URLs? Start with the [offline CSV batch plan](#bulk-website-lists-from-csv), then authorize one aggregate Actor-run cap before hosted execution.
 
 ## Offline browser demo
