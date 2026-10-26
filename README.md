@@ -4,6 +4,10 @@ Two standalone Python 3.9+ examples for exporting source-linked company contacts
 
 **Publisher disclosure:** Signal Foundry publishes the paid Apify Actors used by the optional hosted modes below. These examples, tests and documentation were created with AI assistance. Downloading the code and running the offline samples does not start an Actor or require an Apify account.
 
+## Agent skill
+
+[Source-linked website contacts to CSV](skills/apify-source-linked-contacts-csv/SKILL.md) packages the contact workflow for compatible AI coding assistants. It includes its own Python helper and synthetic offline sample. Hosted requests require the user's authorized spending cap; installing or reading the skill does not start an Actor. The skill is self-contained under `skills/apify-source-linked-contacts-csv/`.
+
 ## Start offline
 
 Download this repository with GitHub's **Code → Download ZIP**, or clone it:
