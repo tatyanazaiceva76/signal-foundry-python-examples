@@ -33,6 +33,25 @@ Automatic retries are disabled. A timeout can hide a run that already started: i
 
 The unchanged template was checked locally against the HTTP Request 4.2, Code 2 and Convert to File 1.1 node definitions, including normal, empty, malformed and formula-like rows. **Import and execution in a live n8n instance have not been verified.** The [Actor guide](https://apify.com/signalfoundryhq/website-contact-extractor) includes a manual node-by-node recipe. Publisher ownership and AI assistance are disclosed above; this is an independent integration, not an n8n endorsement.
 
+## n8n: Greenhouse jobs to CSV
+
+The [manual Greenhouse workflow](greenhouse-to-csv.n8n.json) uses only built-in **Manual Trigger → HTTP Request → Code → Convert to File** nodes. Download its raw JSON and use **Import from File**, or **Import from URL** with:
+
+```text
+https://raw.githubusercontent.com/tatyanazaiceva76/signal-foundry-python-examples/main/greenhouse-to-csv.n8n.json
+```
+
+1. On **Get Greenhouse jobs — max $0.02**, select a private **Header Auth** credential: header `Authorization`, value `Bearer YOUR_APIFY_TOKEN`. The shared workflow contains no token or credential ID; importing it does not start a run.
+2. Edit the node's **JSON body**: `boardTokens` selects explicit employers; `titleContains`, `descriptionContains`, `locationContains` and `departmentContains` accept case-insensitive substrings. Supplied filters combine as AND conditions before delivery and charging. The example asks for engineering roles mentioning Python on the `anthropic` board; current matches are not guaranteed.
+3. Review the Actor's current price and execute manually. This starts one paid snapshot, scans at most 1,000 listings and delivers at most ten job versions, with a **$0.02 server-side cap**. At the base price ten rows cost **$0.015**, including platform usage. A cap does not guarantee ten matches; zero matches have no result charge.
+4. Download binary field `data` from **Create jobs.csv**. It keeps company, title, displayed location, departments, public source dates, job URL and description text. Formula-like cells receive an apostrophe prefix; retain the original JSON for unchanged strings. An empty dataset may produce no CSV file.
+
+The workflow is inactive, uses no community nodes, creates no schedule and sends no mail or applicant data. Automatic retries are disabled. If a response is interrupted, inspect the existing run in Apify Console before another execution: the first paid POST may already have started work.
+
+For sequential repeat checks, optionally set `onlyNew: true` and use one stable `stateKey` per combination of boards, filters and description setting. The first check can deliver existing matches. History retains up to 25,000 fingerprints; older versions may reappear. This Actor does not emit closed-job events, discover every employer or infer salary, visa sponsorship or remote eligibility.
+
+The workflow JSON and its transformation code were checked locally with synthetic job rows, malformed responses, empty input and spreadsheet formula cases. **Live import and execution in n8n have not been verified.** The backend was previously validated separately; that is not a live workflow test or customer payment. Publisher ownership and AI assistance are disclosed above. [Actor details and limits](https://apify.com/signalfoundryhq/greenhouse-hiring-radar).
+
 ## Start offline
 
 Download this repository with GitHub's **Code → Download ZIP**, or clone it:

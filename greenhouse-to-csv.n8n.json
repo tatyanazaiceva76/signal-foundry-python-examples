@@ -1,0 +1,123 @@
+{
+  "name": "Greenhouse jobs to CSV — manual capped export",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9b1547c0-fb89-5738-922d-2df91abb4137",
+      "name": "Manual start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "Importing does not run the Actor. Each manual execution starts a new paid snapshot."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/signalfoundryhq~greenhouse-hiring-radar/run-sync-get-dataset-items?maxTotalChargeUsd=0.02&memory=256&timeout=120",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"boardTokens\": [\n    \"anthropic\"\n  ],\n  \"titleContains\": \"engineer\",\n  \"descriptionContains\": \"python\",\n  \"includeDescription\": true,\n  \"maxJobsScanned\": 1000,\n  \"maxItems\": 10,\n  \"onlyNew\": false,\n  \"stateKey\": \"n8n-greenhouse-csv-anthropic-engineer-python\"\n}",
+        "options": {
+          "timeout": 150000,
+          "response": {
+            "response": {
+              "responseFormat": "json",
+              "fullResponse": false,
+              "neverError": false
+            }
+          }
+        }
+      },
+      "id": "5760ebec-d64e-5f69-a43e-515e9d0de14a",
+      "name": "Get Greenhouse jobs — max $0.02",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "retryOnFail": false,
+      "notesInFlow": true,
+      "notes": "Select a private Header Auth credential: Authorization = Bearer YOUR_APIFY_TOKEN. No token or credential ID is included. Edit boardTokens and filters in the JSON body. One execution starts a paid snapshot; no automatic retry. If a response is lost, check the existing run in Apify Console before another POST."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// n8n Code node: JavaScript, Run Once for All Items.\nconst fields = [\n  'boardToken', 'jobId', 'companyName', 'title', 'location', 'departments',\n  'firstPublished', 'updatedAt', 'jobUrl', 'descriptionText', 'signalId',\n];\n\nfunction spreadsheetCell(value) {\n  const text = Array.isArray(value)\n    ? value.map(String).join('; ')\n    : value == null ? '' : String(value);\n  const visible = text.replace(/^[\\s\\uFEFF]+/, '');\n  return /^[=+\\-@＝＋－＠]/.test(visible) || /^[\\t\\r\\n]/.test(text)\n    ? \"'\" + text\n    : text;\n}\n\nreturn $input.all().map((item, index) => {\n  const row = item.json;\n  if (!row || typeof row.jobUrl !== 'string' || typeof row.title !== 'string'\n      || !['string', 'number'].includes(typeof row.jobId)) {\n    throw new Error('Expected a Greenhouse job dataset row. Check the HTTP response and keep full-response mode off.');\n  }\n  return {\n    json: Object.fromEntries(fields.map(field => [field, spreadsheetCell(row[field])])),\n    pairedItem: { item: index },\n  };\n});\n"
+      },
+      "id": "331781ac-82cd-5dd9-89b4-2c72c3469ad5",
+      "name": "Flatten job fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "jobs.csv",
+          "headerRow": true
+        }
+      },
+      "id": "11ddf139-43b1-5e28-b368-89965c5d9462",
+      "name": "Create jobs.csv",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        0
+      ],
+      "notes": "Download binary field data after execution. Columns match the Python jobs exporter. Empty datasets may produce no CSV file. Formula-like cells receive an apostrophe prefix; preserve the original JSON for unmodified strings."
+    }
+  ],
+  "connections": {
+    "Manual start": {
+      "main": [
+        [
+          {
+            "node": "Get Greenhouse jobs — max $0.02",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Greenhouse jobs — max $0.02": {
+      "main": [
+        [
+          {
+            "node": "Flatten job fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten job fields": {
+      "main": [
+        [
+          {
+            "node": "Create jobs.csv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
