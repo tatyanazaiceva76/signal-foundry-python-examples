@@ -1,0 +1,38 @@
+[
+  {
+    "boardToken": "example-company",
+    "jobId": "synthetic-ashby-001",
+    "title": "Data Engineer (synthetic)",
+    "location": "Example City",
+    "secondaryLocations": [{"location": "Example Remote", "address": {"addressCountry": "Example Country"}}],
+    "department": "Engineering",
+    "team": "Platform",
+    "employmentType": "FullTime",
+    "workplaceType": "Remote",
+    "isRemote": true,
+    "publishedAt": "2026-10-02T09:00:00Z",
+    "compensation": {"compensationTierSummary": "Synthetic compensation, not a market salary", "summaryComponents": [{"compensationType": "Salary", "interval": "1 YEAR", "currencyCode": "EUR", "minValue": 100, "maxValue": 200}]},
+    "jobUrl": "https://example.com/synthetic-ashby/001",
+    "applyUrl": "https://example.com/synthetic-ashby/001/apply",
+    "sourceApiUrl": "https://example.com/synthetic-ashby-api",
+    "signalId": "example-company:synthetic-ashby-001:synthetic-version"
+  },
+  {
+    "boardToken": "example-company",
+    "jobId": "synthetic-ashby-002",
+    "title": "Operations Analyst (synthetic)",
+    "location": "Example City",
+    "secondaryLocations": [],
+    "department": "Operations",
+    "team": null,
+    "employmentType": "FullTime",
+    "workplaceType": "OnSite",
+    "isRemote": false,
+    "publishedAt": null,
+    "compensation": null,
+    "jobUrl": "https://example.com/synthetic-ashby/002",
+    "applyUrl": null,
+    "sourceApiUrl": "https://example.com/synthetic-ashby-api",
+    "signalId": "example-company:synthetic-ashby-002:synthetic-version"
+  }
+]

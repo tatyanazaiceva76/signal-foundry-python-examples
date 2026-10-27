@@ -1,6 +1,6 @@
-# Python CSV clients: website contacts and Greenhouse jobs
+# Python CSV clients: website contacts, Greenhouse, Lever and Ashby jobs
 
-Python 3.9+ clients for exporting source-linked company contacts or an employer hiring watchlist to a spreadsheet. A CSV batch driver handles website lists larger than one Actor input. Try both with the included synthetic JSON files before connecting an API. No package installation is needed.
+Python 3.9+ clients for exporting source-linked company contacts or an employer hiring watchlist to a spreadsheet. A CSV batch driver handles website lists larger than one Actor input. Try the included synthetic JSON files before connecting an API. No package installation is needed.
 
 **Publisher disclosure:** Signal Foundry publishes the paid Apify Actors used by the optional hosted modes below. These examples, tests and documentation were created with AI assistance. Downloading the code and running the offline samples does not start an Actor or require an Apify account.
 
@@ -12,7 +12,7 @@ Have more than 25 website URLs? Start with the [offline CSV batch plan](#bulk-we
 
 Download **signal-foundry-csv-demo.html** from the [latest release](https://github.com/tatyanazaiceva76/signal-foundry-python-examples/releases/latest), then open that saved file in your browser. Try the built-in synthetic contacts or jobs, or choose your own JSON export and download a CSV. Conversion needs no Python, token, installation or network request. Files stay in the page; the demo has no analytics or remote scripts.
 
-The demo accepts up to 2 MiB and 10,000 rows, keeps the same contact/job columns as the Python clients, and offers a local email-only filter for contacts. It quotes CSV cells, adds a UTF-8 BOM and neutralizes formula-like strings with an apostrophe. The preview shortens long cells; the downloaded CSV keeps the full selected values. Preserve the original JSON for unmodified data. This demo converts existing exports; use the client instructions below for an optional paid hosted run.
+The demo accepts up to 2 MiB and 10,000 rows, keeps the contact and Greenhouse job columns, and offers a local email-only filter for contacts. Use the Python client below for Lever and Ashby records. The demo quotes CSV cells, adds a UTF-8 BOM and neutralizes formula-like strings with an apostrophe. The preview shortens long cells; the downloaded CSV keeps the full selected values. Preserve the original JSON for unmodified data. This demo converts existing exports; use the client instructions below for an optional paid hosted run.
 
 ## Agent skill
 
@@ -65,6 +65,8 @@ git clone https://github.com/tatyanazaiceva76/signal-foundry-python-examples.git
 cd signal-foundry-python-examples
 python3 export_contacts.py --from-json sample_contacts.json --output contacts.csv
 python3 export_jobs.py --from-json sample_jobs.json --output jobs.csv
+python3 export_ats_jobs.py --provider lever --from-json sample_lever_jobs.json --output jobs.csv
+python3 export_ats_jobs.py --provider ashby --from-json sample_ashby_jobs.json --output jobs.csv
 ```
 
 Each command writes two synthetic rows. The datasets use the reserved `example.com` domain: they are demonstration records, not collected leads or current vacancies. These commands need no token, network request or paid run.
@@ -75,8 +77,45 @@ Each command writes two synthetic rows. The datasets use the reserved `example.c
 | --- | --- | --- | --- |
 | Published emails, phone links and social profiles from a known website list | `export_contacts.py` | [Website Contact Scraper](https://apify.com/signalfoundryhq/website-contact-extractor) | $0.03 |
 | Public job versions from explicit Greenhouse employer boards, with description text | `export_jobs.py` | [Greenhouse Jobs Scraper](https://apify.com/signalfoundryhq/greenhouse-hiring-radar) | $0.02 |
+| Public Lever job metadata, including global and EU boards | `export_ats_jobs.py --provider lever` | [Lever Jobs Scraper](https://apify.com/signalfoundryhq/lever-hiring-radar) | $0.02 |
+| Listed Ashby job metadata and employer-disclosed compensation | `export_ats_jobs.py --provider ashby` | [Ashby Jobs Scraper](https://apify.com/signalfoundryhq/ashby-hiring-radar) | $0.02 |
 
 Hosted mode requires an Apify account and your own API token in the `APIFY_TOKEN` environment variable. Each command starts one new Actor run. A charge cap limits that run's charge; it does not guarantee a number of results. Review the linked Actor's current pricing before execution.
+
+## Lever and Ashby jobs to CSV
+
+Use `export_ats_jobs.py` with `export_jobs.py` in the same folder, or clone this repository. The shared helper needs only the Python standard library. The two `--from-json` commands above each convert two **synthetic** normalized Actor records without a token, network request or paid run. They overwrite the named CSV; choose a different `--output` to keep separate exports. Sample URLs use `example.com`; sample compensation is invented for format testing and is not salary research.
+
+For a hosted run, create `boards.txt` with one employer board token or HTTPS board URL per line. Use a separate file for each provider:
+
+| Provider | Accepted board examples | Source scope |
+| --- | --- | --- |
+| Lever | `spotify`, `eu:YOUR_BOARD`, `https://jobs.eu.lever.co/YOUR_BOARD` | Public global or EU-hosted Lever boards. Keep token case as shown by the source. |
+| Ashby | `linear`, `https://jobs.ashbyhq.com/YOUR_BOARD` | Listed public Ashby jobs only. Compensation is included when the employer exposes it. |
+
+`YOUR_BOARD` is a placeholder, not a working company. Use the employer's board URL rather than a single job or application link. The client rejects other hosts, credentials, URL query parameters and mixed-provider boards before an API request. Each run accepts at most 25 boards; it does not find employers automatically.
+
+Set your own `APIFY_TOKEN` privately, review the current Actor price, then choose **one** provider command:
+
+```bash
+python3 export_ats_jobs.py --provider lever --boards boards.txt --title-contains engineer --max-items 10 --max-charge 0.02 --output jobs.csv
+# For a separate Ashby board list instead:
+python3 export_ats_jobs.py --provider ashby --boards boards.txt --title-contains engineer --max-items 10 --max-charge 0.02 --output jobs.csv
+```
+
+Each command makes **one new paid POST**, with a **$0.02 server-side run cap**, at most ten delivered job versions and 1,000 source records scanned by default. Executing both starts two separately capped runs; this client has no aggregate budget manager. Each backend's base price is **$0.0015 per delivered job metadata version ($1.50 per 1,000)**, including platform usage, with no start fee. Ten rows cost $0.015 at that price. A cap does not promise ten matches or complete coverage. Filters `--title-contains`, `--location-contains` and `--department-contains` are case-insensitive substrings combined as AND conditions before delivery and result charging.
+
+The UTF-8 CSV includes `provider`, source board and job IDs, title, locations, department, team, employment/workplace types, job/apply/API URLs and `signalId`. Lever `createdAt` and Ashby `publishedAt` stay in **separate columns**: creation and last publication are different dates. Missing values stay empty. `salaryRangeJson`, `compensationJson` and `secondaryLocationsJson` retain the source objects, including currency and interval, without annualizing or guessing compensation. CSV quoting, a UTF-8 BOM and formula-cell prefixes help spreadsheet import; keep the original JSON for unchanged strings. This converter accepts the linked Actors' normalized dataset arrays, not raw Lever or Ashby API envelopes.
+
+For a repeat feed, add `--only-new`. The default history key is derived from provider, ordered boards, filters and compensation setting. Keep them stable to skip remembered delivered versions. The first check can return existing jobs; the backend retains at most 25,000 fingerprints, and older versions may reappear after eviction. Optional `--state-key` selects an explicit feed history. Neither backend emits closed-job/deletion events or full job descriptions. Ashby remote flags and compensation are reported only when supplied; the client does not infer remote eligibility, visa support or salary.
+
+No automatic retry or redirect is used for the paid POST. If it times out, inspect that Actor's existing runs in Apify Console and export the already-created dataset before starting another. To convert it without another run:
+
+```bash
+python3 export_ats_jobs.py --provider lever --from-json existing-dataset.json --output jobs.csv
+```
+
+Use `--provider ashby` for an Ashby dataset. Empty datasets produce a header-only CSV. No schedule, Google Sheets authorization, applicant submission, email or community node is created. The client and synthetic cases were tested locally; **this new client has not executed a live paid run**. Signal Foundry publishes the optional paid backends and prepared this implementation and documentation with AI assistance.
 
 ## Website contacts to CSV
 
@@ -157,9 +196,9 @@ Add `--only-new` to skip job versions already delivered for the same feed. The s
 
 ## Reuse an existing dataset
 
-Both `--from-json` commands work with an existing JSON array downloaded from the corresponding Actor. They do not create new runs. Offline conversion cannot change charges from the original run. The jobs client converts the supplied rows unchanged; its source filters and history flags apply only to hosted board requests.
+All `--from-json` commands work with an existing JSON array downloaded from the corresponding Actor. They do not create new runs. Offline conversion cannot change charges from the original run. The jobs clients convert the supplied rows; their source filters and history flags apply only to hosted board requests.
 
-Both exporters write UTF-8 CSV with a BOM and quoted cells. Formula-like strings receive a leading apostrophe, which changes the exported string; retain the original JSON for unmodified processing and import untrusted spreadsheet columns as text. Descriptions can contain line breaks inside a quoted CSV cell.
+The exporters write UTF-8 CSV with a BOM and quoted cells. Formula-like strings receive a leading apostrophe, which changes the exported string; retain the original JSON for unmodified processing and import untrusted spreadsheet columns as text. Descriptions can contain line breaks inside a quoted CSV cell.
 
 ## If a hosted request is interrupted
 
@@ -173,10 +212,10 @@ Do not put tokens in command URLs, shared JSON or issue reports. The clients sen
 python3 -m unittest discover -p 'test_*.py' -v
 ```
 
-The tests cover offline conversion, CSV output, charge-cap and authentication placement, no automatic paid-POST retries, and jobs feed history keys. Network calls in the tests are mocked. The published client versions were also checked against their original files; a separate capped owner run validated the jobs integration. Owner tests are not customer usage or sales evidence.
+The tests cover offline conversion, CSV output, charge-cap and authentication placement, no automatic paid-POST retries, and jobs feed history keys. Network calls in the tests are mocked. The published client versions were also checked against their original files; a separate capped owner run validated the original Greenhouse integration. The new Lever/Ashby client has only local mocked and synthetic validation. Owner tests are not customer usage or sales evidence.
 
 ## Scope and support
 
-These are independent integrations, not affiliated with Greenhouse or the employers. Source website and job-description content remains subject to the relevant provider and publisher rights; these examples do not grant a separate licence to that source content. The included sample datasets are synthetic.
+These are independent integrations, not affiliated with Greenhouse, Lever, Ashby or the employers. Source website and job-description content remains subject to the relevant provider and publisher rights; these examples do not grant a separate licence to that source content. The included sample datasets are synthetic.
 
 Report a reproducible hosted-tool problem through the corresponding Actor's Apify Issues tab. Include the run ID and filters, never an API token or private contact data.

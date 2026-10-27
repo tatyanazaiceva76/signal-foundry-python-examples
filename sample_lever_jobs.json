@@ -1,0 +1,38 @@
+[
+  {
+    "boardToken": "example-company",
+    "region": "eu",
+    "jobId": "synthetic-lever-001",
+    "title": "Backend Engineer (synthetic)",
+    "location": "Example City",
+    "locations": ["Example City", "Example Remote"],
+    "department": "Engineering",
+    "team": "Platform",
+    "employmentType": "Full-time",
+    "workplaceType": "hybrid",
+    "createdAt": "2026-10-01T09:00:00Z",
+    "salaryRange": {"currency": "EUR", "interval": "year", "min": 100, "max": 200},
+    "jobUrl": "https://example.com/synthetic-lever/001",
+    "applyUrl": "https://example.com/synthetic-lever/001/apply",
+    "sourceApiUrl": "https://example.com/synthetic-lever-api",
+    "signalId": "eu:example-company:synthetic-lever-001:synthetic-version"
+  },
+  {
+    "boardToken": "example-company",
+    "region": "us",
+    "jobId": "synthetic-lever-002",
+    "title": "=Synthetic formula-like title",
+    "location": "Example City",
+    "locations": ["Example City"],
+    "department": "Data",
+    "team": "Research",
+    "employmentType": "Contract",
+    "workplaceType": "on-site",
+    "createdAt": null,
+    "salaryRange": null,
+    "jobUrl": "https://example.com/synthetic-lever/002",
+    "applyUrl": null,
+    "sourceApiUrl": "https://example.com/synthetic-lever-api",
+    "signalId": "us:example-company:synthetic-lever-002:synthetic-version"
+  }
+]
